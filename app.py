@@ -19,6 +19,10 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-pr
 app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', 'development')
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
 
+# Session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+
 # Configuration
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
@@ -87,6 +91,16 @@ def apply_rule(df, rule_data):
     
     return df
 
+@app.route('/test-session')
+def test_session():
+    """Test session functionality"""
+    print(f"Current session: {dict(session)}")  # Debug log
+    return jsonify({
+        'session_data': dict(session),
+        'file_path': session.get('file_path'),
+        'file_exists': os.path.exists(session.get('file_path', '')) if session.get('file_path') else False
+    })
+
 @app.route('/')
 def index():
     """Main page"""
@@ -96,6 +110,8 @@ def index():
 def upload_file():
     """Handle file upload and return column data"""
     try:
+        print("=== UPLOAD FILE CALLED ===")  # Debug log
+        
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
         
@@ -120,8 +136,11 @@ def upload_file():
         file_path = os.path.join(UPLOAD_FOLDER, f"{session_id}_{filename}")
         file.save(file_path)
         
+        print(f"File saved to: {file_path}")  # Debug log
+        
         # Read Excel file
         df = pd.read_excel(file_path)
+        print(f"DataFrame shape: {df.shape}")  # Debug log
         
         # Get column information
         columns = df.columns.tolist()
@@ -135,6 +154,10 @@ def upload_file():
         # Store file path in session
         session['file_path'] = file_path
         session['columns'] = columns
+        session.permanent = True  # Make session permanent
+        
+        print(f"Session file_path: {session.get('file_path')}")  # Debug log
+        print(f"Session ID: {session_id}")  # Debug log
         
         return jsonify({
             'success': True,
@@ -144,6 +167,7 @@ def upload_file():
         })
         
     except Exception as e:
+        print(f"Error in upload_file: {str(e)}")  # Debug log
         return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
 @app.route('/process', methods=['POST'])
