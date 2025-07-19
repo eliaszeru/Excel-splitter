@@ -571,7 +571,7 @@
                                     <p class="mb-0 text-muted">${file.rows} rows of data</p>
                                 </div>
                                 <div class="col-md-4 text-end">
-                                    <button class="btn btn-custom btn-sm" onclick="downloadFile('${file.download_url}', '${file.filename}')">
+                                    <button class="btn btn-custom btn-sm" onclick="downloadFile('${file.download_url}', '${file.filename}')" id="download_${file.filename.replace('.', '_')}">
                                         <i class="fas fa-download me-2"></i>Download
                                     </button>
                                 </div>
@@ -588,16 +588,38 @@
         }
 
         function downloadFile(url, filename) {
-            // Create a temporary link element
+            console.log('Downloading file:', url, filename); // Debug log
+            
+            // Get the download button and show loading state
+            const buttonId = `download_${filename.replace('.', '_')}`;
+            const button = document.getElementById(buttonId);
+            if (button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Downloading...';
+                button.disabled = true;
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+            
+            // Simple and reliable download method
             const link = document.createElement('a');
             link.href = url;
             link.download = filename;
-            link.target = '_blank';
+            link.style.display = 'none';
             
-            // Append to body, click, and remove
+            // Add to DOM, click, and remove
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            
+            // Also try opening in new tab as fallback after a short delay
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 500);
         }
 
         function startOver() {

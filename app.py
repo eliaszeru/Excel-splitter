@@ -248,12 +248,26 @@ def process_rules():
 def download_file(filename):
     """Download generated Excel file"""
     try:
+        print(f"=== DOWNLOAD REQUESTED ===")  # Debug log
+        print(f"Filename: {filename}")  # Debug log
+        
         file_path = os.path.join(UPLOAD_FOLDER, filename)
+        print(f"File path: {file_path}")  # Debug log
+        print(f"File exists: {os.path.exists(file_path)}")  # Debug log
+        
         if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True, download_name=filename)
+            print(f"File size: {os.path.getsize(file_path)} bytes")  # Debug log
+            return send_file(
+                file_path, 
+                as_attachment=True, 
+                download_name=filename,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
         else:
+            print(f"File not found: {file_path}")  # Debug log
             return jsonify({'error': 'File not found'}), 404
     except Exception as e:
+        print(f"Error in download_file: {str(e)}")  # Debug log
         return jsonify({'error': f'Error downloading file: {str(e)}'}), 500
 
 @app.route('/cleanup', methods=['POST'])
