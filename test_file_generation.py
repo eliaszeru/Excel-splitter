@@ -20,7 +20,9 @@ def test_file_generation():
     print(f"Upload response status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
+        session_id = data.get('session_id')
         print(f"Upload successful: {data.get('total_rows')} rows")
+        print(f"Session ID: {session_id}")
     else:
         print(f"Upload failed: {response.text}")
         return
@@ -47,7 +49,8 @@ def test_file_generation():
                 "value2": [],
                 "custom_name": "test_men"
             }
-        ]
+        ],
+        "session_id": session_id
     }
     
     response = requests.post(

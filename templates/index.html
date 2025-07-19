@@ -72,6 +72,23 @@
             justify-content: flex-end;
             min-height: 60px;
         }
+        .checkbox-container {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 5px;
+            background-color: #f8f9fa;
+        }
+        .form-check-inline {
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
     </style>
 </head>
 <body>
@@ -314,10 +331,14 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">Value 1</label>
-                                <select class="form-select" id="${ruleId}_value1" multiple>
-                                    <option value="">Select Value(s)</option>
-                                </select>
-                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                <div class="value-selection-container" id="${ruleId}_value1_container">
+                                    <select class="form-select" id="${ruleId}_value1" onchange="updateValueSelection('${ruleId}', 1)">
+                                        <option value="">Select Value(s)</option>
+                                    </select>
+                                    <div class="checkbox-container" id="${ruleId}_value1_checkboxes" style="display: none;">
+                                        <!-- Checkboxes will be populated here -->
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-2" id="${ruleId}_secondColumn" style="display: none;">
                                 <label class="form-label">Column 2</label>
@@ -328,10 +349,14 @@
                             </div>
                             <div class="col-md-2" id="${ruleId}_secondValue" style="display: none;">
                                 <label class="form-label">Value 2</label>
-                                <select class="form-select" id="${ruleId}_value2" multiple>
-                                    <option value="">Select Value(s)</option>
-                                </select>
-                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                <div class="value-selection-container" id="${ruleId}_value2_container">
+                                    <select class="form-select" id="${ruleId}_value2" onchange="updateValueSelection('${ruleId}', 2)">
+                                        <option value="">Select Value(s)</option>
+                                    </select>
+                                    <div class="checkbox-container" id="${ruleId}_value2_checkboxes" style="display: none;">
+                                        <!-- Checkboxes will be populated here -->
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">File Name (Optional)</label>
@@ -366,15 +391,66 @@
 
         function updateColumnValues(ruleId, columnNum, columnName) {
             const valueSelect = document.getElementById(`${ruleId}_value${columnNum}`);
+            const checkboxContainer = document.getElementById(`${ruleId}_value${columnNum}_checkboxes`);
             
-            // Clear both selects
+            // Clear both selects and checkboxes
             valueSelect.innerHTML = '<option value="">Select Value(s)</option>';
+            checkboxContainer.innerHTML = '';
+            checkboxContainer.style.display = 'none';
             
             if (columnName && columnData[columnName]) {
                 columnData[columnName].forEach(value => {
+                    // Add to dropdown
                     valueSelect.innerHTML += `<option value="${value}">${value}</option>`;
+                    
+                    // Add checkbox
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'form-check form-check-inline';
+                    checkbox.innerHTML = `
+                        <input class="form-check-input" type="checkbox" value="${value}" onchange="updateDropdownFromCheckboxes('${ruleId}', ${columnNum})">
+                        <label class="form-check-label">${value}</label>
+                    `;
+                    checkboxContainer.appendChild(checkbox);
                 });
+                
+                // Show checkboxes
+                checkboxContainer.style.display = 'block';
             }
+        }
+
+        function updateValueSelection(ruleId, columnNum) {
+            const valueSelect = document.getElementById(`${ruleId}_value${columnNum}`);
+            const checkboxContainer = document.getElementById(`${ruleId}_value${columnNum}_checkboxes`);
+            const selectedValues = Array.from(valueSelect.selectedOptions).map(option => option.value);
+
+            // Clear existing checkboxes
+            checkboxContainer.innerHTML = '';
+
+            if (selectedValues.length > 0) {
+                selectedValues.forEach(value => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'form-check form-check-inline';
+                    checkbox.innerHTML = `
+                        <input class="form-check-input" type="checkbox" value="${value}" checked>
+                        <label class="form-check-label">${value}</label>
+                    `;
+                    checkboxContainer.appendChild(checkbox);
+                });
+                checkboxContainer.style.display = 'block';
+            } else {
+                checkboxContainer.style.display = 'none';
+            }
+        }
+
+        function updateDropdownFromCheckboxes(ruleId, columnNum) {
+            const valueSelect = document.getElementById(`${ruleId}_value${columnNum}`);
+            const checkboxContainer = document.getElementById(`${ruleId}_value${columnNum}_checkboxes`);
+            const selectedValues = Array.from(checkboxContainer.querySelectorAll('.form-check-input:checked')).map(checkbox => checkbox.value);
+
+            valueSelect.innerHTML = '<option value="">Select Value(s)</option>';
+            selectedValues.forEach(value => {
+                valueSelect.innerHTML += `<option value="${value}">${value}</option>`;
+            });
         }
 
         function removeRule(ruleId) {
@@ -395,9 +471,15 @@
                 const ruleElement = document.getElementById(ruleId);
                 const ruleType = ruleElement.querySelector('select').value;
                 const column1 = ruleElement.querySelector('select:nth-of-type(2)').value;
-                const value1 = Array.from(document.getElementById(`${ruleId}_value1`).selectedOptions).map(option => option.value);
+                
+                // Get values from checkboxes
+                const value1Checkboxes = document.getElementById(`${ruleId}_value1_checkboxes`);
+                const value1 = Array.from(value1Checkboxes.querySelectorAll('.form-check-input:checked')).map(checkbox => checkbox.value);
+                
                 const column2 = ruleElement.querySelector('select:nth-of-type(3)').value;
-                const value2 = Array.from(document.getElementById(`${ruleId}_value2`).selectedOptions).map(option => option.value);
+                const value2Checkboxes = document.getElementById(`${ruleId}_value2_checkboxes`);
+                const value2 = Array.from(value2Checkboxes.querySelectorAll('.form-check-input:checked')).map(checkbox => checkbox.value);
+                
                 const customName = document.getElementById(`${ruleId}_customName`).value;
                 
                 if (!column1 || value1.length === 0) {
@@ -489,9 +571,9 @@
                                     <p class="mb-0 text-muted">${file.rows} rows of data</p>
                                 </div>
                                 <div class="col-md-4 text-end">
-                                    <a href="${file.download_url}" class="btn btn-custom btn-sm">
+                                    <button class="btn btn-custom btn-sm" onclick="downloadFile('${file.download_url}', '${file.filename}')">
                                         <i class="fas fa-download me-2"></i>Download
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -503,6 +585,19 @@
             
             document.getElementById('rulesSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        function downloadFile(url, filename) {
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            
+            // Append to body, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function startOver() {
