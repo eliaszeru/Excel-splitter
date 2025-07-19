@@ -169,9 +169,6 @@
                     <button class="btn btn-custom btn-lg" onclick="processRules()" id="processBtn">
                         <i class="fas fa-magic me-2"></i>Generate Files
                     </button>
-                    <button class="btn btn-outline-secondary ms-2" onclick="testDownload()" id="testDownloadBtn">
-                        <i class="fas fa-download me-2"></i>Test Download
-                    </button>
                 </div>
             </div>
         </div>
@@ -480,12 +477,18 @@
                     return;
                 }
                 
-                const ruleTypeSelect = ruleElement.querySelector('select');
-                const column1Select = ruleElement.querySelector('select:nth-of-type(2)');
-                const column2Select = ruleElement.querySelector('select:nth-of-type(3)');
+                // Use more specific selectors to find the correct elements
+                const ruleTypeSelect = ruleElement.querySelector('select[onchange*="updateRuleType"]');
+                const column1Select = ruleElement.querySelector('select[onchange*="updateColumnValues"][onchange*="1"]');
+                const column2Select = ruleElement.querySelector('select[onchange*="updateColumnValues"][onchange*="2"]');
+                
+                console.log(`Rule type select:`, ruleTypeSelect); // Debug log
+                console.log(`Column1 select:`, column1Select); // Debug log
+                console.log(`Column2 select:`, column2Select); // Debug log
                 
                 if (!ruleTypeSelect || !column1Select) {
                     console.error(`Required select elements not found for rule: ${ruleId}`);
+                    console.error(`Rule element HTML:`, ruleElement.innerHTML); // Debug log
                     return;
                 }
                 
@@ -749,55 +752,6 @@
             document.getElementById('errorMessage').textContent = message;
             const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
             errorModal.show();
-        }
-
-        function testDownload() {
-            const testUrl = '/test-download'; // Assuming a test endpoint
-            const testFilename = 'test_download.xlsx'; // Example filename
-
-            // Get the download button and show loading state
-            const buttonId = `testDownloadBtn`;
-            const button = document.getElementById(buttonId);
-            if (button) {
-                const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Downloading...';
-                button.disabled = true;
-                
-                // Reset button after 3 seconds
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                }, 3000);
-            }
-
-            fetch(testUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.download = testFilename;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    setTimeout(() => {
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(blobUrl);
-                    }, 100);
-                })
-                .catch(error => {
-                    console.error('Test download failed:', error);
-                    showError('Error during test download: ' + error.message);
-                    if (button) {
-                        button.innerHTML = originalText;
-                        button.disabled = false;
-                    }
-                });
         }
     </script>
 
