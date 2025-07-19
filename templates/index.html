@@ -474,16 +474,58 @@
             rules.forEach(ruleId => {
                 console.log(`Processing rule: ${ruleId}`); // Debug log
                 const ruleElement = document.getElementById(ruleId);
+                
+                if (!ruleElement) {
+                    console.error(`Rule element not found: ${ruleId}`);
+                    return;
+                }
+                
                 const ruleType = ruleElement.querySelector('select').value;
                 const column1 = ruleElement.querySelector('select:nth-of-type(2)').value;
                 
-                // Get values from checkboxes
+                // Get values from checkboxes with proper null checks
                 const value1Checkboxes = document.getElementById(`${ruleId}_value1_checkboxes`);
-                const value1 = Array.from(value1Checkboxes.querySelectorAll('.form-check-input:checked')).map(checkbox => checkbox.value);
+                console.log(`Value1 checkboxes element:`, value1Checkboxes); // Debug log
+                
+                let value1 = [];
+                if (value1Checkboxes) {
+                    const checkedBoxes = value1Checkboxes.querySelectorAll('.form-check-input:checked');
+                    console.log(`Checked boxes for value1:`, checkedBoxes); // Debug log
+                    value1 = Array.from(checkedBoxes).map(checkbox => checkbox.value);
+                } else {
+                    console.error(`Value1 checkboxes container not found for rule: ${ruleId}`);
+                }
+                
+                // Fallback: if no checkboxes selected, try to get from dropdown
+                if (value1.length === 0) {
+                    const value1Select = document.getElementById(`${ruleId}_value1`);
+                    if (value1Select && value1Select.value) {
+                        value1 = [value1Select.value];
+                        console.log(`Using dropdown value for value1:`, value1);
+                    }
+                }
                 
                 const column2 = ruleElement.querySelector('select:nth-of-type(3)').value;
                 const value2Checkboxes = document.getElementById(`${ruleId}_value2_checkboxes`);
-                const value2 = Array.from(value2Checkboxes.querySelectorAll('.form-check-input:checked')).map(checkbox => checkbox.value);
+                console.log(`Value2 checkboxes element:`, value2Checkboxes); // Debug log
+                
+                let value2 = [];
+                if (value2Checkboxes) {
+                    const checkedBoxes = value2Checkboxes.querySelectorAll('.form-check-input:checked');
+                    console.log(`Checked boxes for value2:`, checkedBoxes); // Debug log
+                    value2 = Array.from(checkedBoxes).map(checkbox => checkbox.value);
+                } else {
+                    console.error(`Value2 checkboxes container not found for rule: ${ruleId}`);
+                }
+                
+                // Fallback: if no checkboxes selected, try to get from dropdown
+                if (value2.length === 0) {
+                    const value2Select = document.getElementById(`${ruleId}_value2`);
+                    if (value2Select && value2Select.value) {
+                        value2 = [value2Select.value];
+                        console.log(`Using dropdown value for value2:`, value2);
+                    }
+                }
                 
                 const customName = document.getElementById(`${ruleId}_customName`).value;
                 
