@@ -480,8 +480,18 @@
                     return;
                 }
                 
-                const ruleType = ruleElement.querySelector('select').value;
-                const column1 = ruleElement.querySelector('select:nth-of-type(2)').value;
+                const ruleTypeSelect = ruleElement.querySelector('select');
+                const column1Select = ruleElement.querySelector('select:nth-of-type(2)');
+                const column2Select = ruleElement.querySelector('select:nth-of-type(3)');
+                
+                if (!ruleTypeSelect || !column1Select) {
+                    console.error(`Required select elements not found for rule: ${ruleId}`);
+                    return;
+                }
+                
+                const ruleType = ruleTypeSelect.value;
+                const column1 = column1Select.value;
+                const column2 = column2Select ? column2Select.value : '';
                 
                 // Get values from checkboxes with proper null checks
                 const value1Checkboxes = document.getElementById(`${ruleId}_value1_checkboxes`);
@@ -505,7 +515,6 @@
                     }
                 }
                 
-                const column2 = ruleElement.querySelector('select:nth-of-type(3)').value;
                 const value2Checkboxes = document.getElementById(`${ruleId}_value2_checkboxes`);
                 console.log(`Value2 checkboxes element:`, value2Checkboxes); // Debug log
                 
@@ -527,7 +536,8 @@
                     }
                 }
                 
-                const customName = document.getElementById(`${ruleId}_customName`).value;
+                const customNameElement = document.getElementById(`${ruleId}_customName`);
+                const customName = customNameElement ? customNameElement.value : '';
                 
                 console.log(`Rule data:`, { ruleType, column1, value1, column2, value2, customName }); // Debug log
                 
