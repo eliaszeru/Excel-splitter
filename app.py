@@ -184,22 +184,18 @@ def process_rules():
         data = request.get_json()
         print(f"Received data: {data}")  # Debug log
         rules = data.get('rules', [])
+        session_id = data.get('session_id')  # Get session ID from request
         print(f"Rules: {rules}")  # Debug log
+        print(f"Session ID from request: {session_id}")  # Debug log
         
         if not rules:
             return jsonify({'error': 'No rules provided'}), 400
         
-        # Try to get file path from multiple sources
-        session_id = session.get('session_id')
-        file_path = session.get('file_path')
+        # Get file path from global storage using session ID
+        file_path = file_storage.get(session_id) if session_id else None
         
-        # If session doesn't have it, try global storage
-        if not file_path and session_id:
-            file_path = file_storage.get(session_id)
-        
-        print(f"Session ID: {session_id}")  # Debug log
-        print(f"File path from session: {file_path}")  # Debug log
-        print(f"File path from global storage: {file_storage.get(session_id) if session_id else 'No session ID'}")  # Debug log
+        print(f"File path from global storage: {file_path}")  # Debug log
+        print(f"Available session IDs: {list(file_storage.keys())}")  # Debug log
         
         if not file_path or not os.path.exists(file_path):
             print(f"File exists: {os.path.exists(file_path) if file_path else False}")  # Debug log

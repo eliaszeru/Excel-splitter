@@ -212,6 +212,7 @@
         let columnData = {};
         let rules = [];
         let ruleCounter = 0;
+        let currentSessionId = null; // Store session ID
 
         // File upload handling
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
@@ -265,6 +266,7 @@
                 
                 if (data.success) {
                     columnData = data.column_values;
+                    currentSessionId = data.session_id; // Store session ID
                     document.getElementById('fileName').textContent = file.name;
                     document.getElementById('totalRows').textContent = data.total_rows.toLocaleString();
                     document.getElementById('totalColumns').textContent = data.columns.length;
@@ -434,7 +436,10 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ rules: rulesData })
+                body: JSON.stringify({ 
+                    rules: rulesData,
+                    session_id: currentSessionId
+                })
             })
             .then(response => {
                 console.log('Response status:', response.status); // Debug log
