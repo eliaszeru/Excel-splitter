@@ -55,10 +55,11 @@
             color: white;
         }
         .company-logo {
-            height: 40px;
+            height: 50px;
             width: auto;
-            filter: brightness(0) invert(1); /* Makes logo white */
             transition: all 0.3s ease;
+            max-width: 200px;
+            filter: none; /* Remove filter for SVG */
         }
         .company-logo:hover {
             transform: scale(1.05);
@@ -67,12 +68,6 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
-        }
-        .logo-text {
-            font-size: 14px;
-            font-weight: 600;
-            margin-left: 10px;
-            opacity: 0.9;
         }
     </style>
 </head>
@@ -88,10 +83,10 @@
                 <div class="col-md-4">
                     <div class="logo-container">
                         <!-- Ralph Lauren Logo -->
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Ralph_Lauren_logo.svg/2560px-Ralph_Lauren_logo.svg.png" 
-                             alt="Ralph Lauren" 
-                             class="company-logo">
-                        <span class="logo-text">Ralph Lauren</span>
+                        <svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg" class="company-logo">
+                            <text x="100" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">RALPH LAUREN</text>
+                            <line x1="20" y1="35" x2="180" y2="35" stroke="white" stroke-width="1"/>
+                        </svg>
                     </div>
                 </div>
             </div>
