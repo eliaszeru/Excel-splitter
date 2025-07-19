@@ -587,9 +587,33 @@
             ruleCounter = 0;
         }
 
+        function refreshRulesArray() {
+            // Clear the rules array
+            rules = [];
+            
+            // Find all rule elements in the DOM
+            const ruleElements = document.querySelectorAll('.rule-card');
+            console.log(`Found ${ruleElements.length} rule elements in DOM`); // Debug log
+            
+            // Add their IDs to the rules array
+            ruleElements.forEach((element, index) => {
+                const ruleId = element.id;
+                if (ruleId && ruleId.startsWith('rule_')) {
+                    rules.push(ruleId);
+                    console.log(`Added rule ${index + 1}: ${ruleId}`); // Debug log
+                }
+            });
+            
+            console.log(`Refreshed rules array:`, rules); // Debug log
+        }
+
         function processRules() {
+            // Refresh rules array before processing
+            refreshRulesArray();
+            
             console.log('=== PROCESS RULES STARTED ==='); // Debug log
             console.log(`Total rules to process: ${rules.length}`); // Debug log
+            console.log(`Rules array:`, rules); // Debug log
             const rulesData = [];
             
             rules.forEach((ruleId, index) => {
@@ -619,6 +643,8 @@
                 const ruleType = ruleTypeSelect.value;
                 const column1 = column1Select.value;
                 const column2 = column2Select ? column2Select.value : '';
+                
+                console.log(`Rule ${index + 1} values:`, { ruleType, column1, column2 }); // Debug log
                 
                 // Get values from checkboxes with proper null checks
                 const value1Checkboxes = document.getElementById(`${ruleId}_value1_checkboxes`);
@@ -700,7 +726,7 @@
                 const customNameElement = document.getElementById(`${ruleId}_customName`);
                 const customName = customNameElement ? customNameElement.value : '';
                 
-                console.log(`Rule data:`, { ruleType, column1, value1, column2, value2, additionalColumns, additionalValues, customName }); // Debug log
+                console.log(`Rule ${index + 1} data:`, { ruleType, column1, value1, column2, value2, additionalColumns, additionalValues, customName }); // Debug log
                 
                 // Validation - but don't stop processing, just skip this rule
                 if (!column1 || value1.length === 0) {
@@ -739,6 +765,7 @@
             });
             
             console.log(`Valid rules found: ${rulesData.length} out of ${rules.length} total rules`); // Debug log
+            console.log(`Final rulesData:`, rulesData); // Debug log
             
             if (rulesData.length === 0) {
                 showError('No valid rules found. Please check your rule configurations.');
