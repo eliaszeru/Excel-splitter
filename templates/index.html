@@ -56,16 +56,15 @@
         }
         .company-logo {
             height: 60px;
-            width: auto;
+            width: 60px;
             transition: all 0.3s ease;
-            max-width: 250px;
             filter: none; /* Remove filter for SVG */
             background-color: rgba(255, 255, 255, 0.1);
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 5px;
+            border-radius: 50%;
         }
         .company-logo:hover {
-            transform: scale(1.05);
+            transform: scale(1.1);
             background-color: rgba(255, 255, 255, 0.2);
         }
         .logo-container {
@@ -87,10 +86,27 @@
                 </div>
                 <div class="col-md-4">
                     <div class="logo-container">
-                        <!-- Ralph Lauren Logo -->
-                        <svg width="250" height="60" viewBox="0 0 250 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="company-logo">
-                            <text x="125" y="35" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="white" text-anchor="middle">RALPH LAUREN</text>
-                            <line x1="25" y1="42" x2="225" y2="42" stroke="white" stroke-width="2"/>
+                        <!-- Ralph Lauren Polo Player Logo -->
+                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="company-logo">
+                            <!-- Polo Player on Horseback -->
+                            <circle cx="40" cy="40" r="35" fill="none" stroke="white" stroke-width="2"/>
+                            <!-- Horse body -->
+                            <ellipse cx="40" cy="45" rx="20" ry="8" fill="white"/>
+                            <!-- Horse head -->
+                            <ellipse cx="25" cy="40" rx="8" ry="6" fill="white"/>
+                            <!-- Horse legs -->
+                            <rect x="30" y="50" width="2" height="8" fill="white"/>
+                            <rect x="35" y="50" width="2" height="8" fill="white"/>
+                            <rect x="45" y="50" width="2" height="8" fill="white"/>
+                            <rect x="50" y="50" width="2" height="8" fill="white"/>
+                            <!-- Rider body -->
+                            <ellipse cx="40" cy="35" rx="6" ry="10" fill="white"/>
+                            <!-- Rider head -->
+                            <circle cx="40" cy="22" r="4" fill="white"/>
+                            <!-- Polo stick -->
+                            <line x1="45" y1="30" x2="55" y2="25" stroke="white" stroke-width="2"/>
+                            <!-- Horse tail -->
+                            <path d="M 55 40 Q 65 35 60 45" stroke="white" stroke-width="2" fill="none"/>
                         </svg>
                     </div>
                 </div>
