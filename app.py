@@ -51,21 +51,47 @@ def generate_filename(rule_data):
         values_str = '_'.join(values)
         return f"{col}_{values_str}.xlsx"
     elif rule_type == 'and':
+        # Start with first two columns
         col1 = rule_data['column1']
         values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
         values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
         values1_str = '_'.join(values1)
         values2_str = '_'.join(values2)
-        return f"{col1}_{values1_str}_{col2}_{values2_str}.xlsx"
+        filename = f"{col1}_{values1_str}_{col2}_{values2_str}"
+        
+        # Add additional columns
+        additional_columns = rule_data.get('additional_columns', [])
+        additional_values = rule_data.get('additional_values', [])
+        
+        for i, col in enumerate(additional_columns):
+            if i < len(additional_values):
+                values = additional_values[i] if isinstance(additional_values[i], list) else [additional_values[i]]
+                values_str = '_'.join(values)
+                filename += f"_{col}_{values_str}"
+        
+        return f"{filename}.xlsx"
     elif rule_type == 'or':
+        # Start with first two columns
         col1 = rule_data['column1']
         values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
         values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
         values1_str = '_'.join(values1)
         values2_str = '_'.join(values2)
-        return f"{col1}_{values1_str}_OR_{col2}_{values2_str}.xlsx"
+        filename = f"{col1}_{values1_str}_OR_{col2}_{values2_str}"
+        
+        # Add additional columns
+        additional_columns = rule_data.get('additional_columns', [])
+        additional_values = rule_data.get('additional_values', [])
+        
+        for i, col in enumerate(additional_columns):
+            if i < len(additional_values):
+                values = additional_values[i] if isinstance(additional_values[i], list) else [additional_values[i]]
+                values_str = '_'.join(values)
+                filename += f"_OR_{col}_{values_str}"
+        
+        return f"{filename}.xlsx"
     
     return f"split_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
 
@@ -79,18 +105,46 @@ def apply_rule(df, rule_data):
         return df[df[column].isin(values)]
     
     elif rule_type == 'and':
+        # Start with first two columns
         col1 = rule_data['column1']
         values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
         values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
-        return df[(df[col1].isin(values1)) & (df[col2].isin(values2))]
+        
+        # Apply first two conditions
+        filtered_df = df[(df[col1].isin(values1)) & (df[col2].isin(values2))]
+        
+        # Apply additional columns (3-6) if they exist
+        additional_columns = rule_data.get('additional_columns', [])
+        additional_values = rule_data.get('additional_values', [])
+        
+        for i, col in enumerate(additional_columns):
+            if i < len(additional_values):
+                values = additional_values[i] if isinstance(additional_values[i], list) else [additional_values[i]]
+                filtered_df = filtered_df[filtered_df[col].isin(values)]
+        
+        return filtered_df
     
     elif rule_type == 'or':
+        # Start with first two columns
         col1 = rule_data['column1']
         values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
         values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
-        return df[(df[col1].isin(values1)) | (df[col2].isin(values2))]
+        
+        # Apply first two conditions
+        filtered_df = df[(df[col1].isin(values1)) | (df[col2].isin(values2))]
+        
+        # Apply additional columns (3-6) if they exist
+        additional_columns = rule_data.get('additional_columns', [])
+        additional_values = rule_data.get('additional_values', [])
+        
+        for i, col in enumerate(additional_columns):
+            if i < len(additional_values):
+                values = additional_values[i] if isinstance(additional_values[i], list) else [additional_values[i]]
+                filtered_df = filtered_df | df[df[col].isin(values)]
+        
+        return filtered_df
     
     return df
 

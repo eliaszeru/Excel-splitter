@@ -314,11 +314,11 @@
                             <div class="col-md-1">
                                 <span class="badge bg-primary">${ruleCounter}</span>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label">Rule Type</label>
                                 <select class="form-select" onchange="updateRuleType('${ruleId}', this.value)">
                                     <option value="single">Single Column</option>
-                                    <option value="and">AND Logic</option>
+                                    <option value="and">AND Logic (Multi-Column)</option>
                                     <option value="or">OR Logic</option>
                                 </select>
                             </div>
@@ -368,6 +368,21 @@
                                 </button>
                             </div>
                         </div>
+                        
+                        <!-- Additional columns for AND logic (3-6) -->
+                        <div id="${ruleId}_additionalColumns" style="display: none;">
+                            <hr class="my-3">
+                            <div class="row">
+                                <div class="col-12 mb-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="addAdditionalColumn('${ruleId}')" id="${ruleId}_addColumnBtn">
+                                        <i class="fas fa-plus me-1"></i>Add Another Column
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="${ruleId}_additionalColumnsContainer">
+                                <!-- Additional columns will be added here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -379,13 +394,16 @@
         function updateRuleType(ruleId, ruleType) {
             const secondColumn = document.getElementById(`${ruleId}_secondColumn`);
             const secondValue = document.getElementById(`${ruleId}_secondValue`);
+            const additionalColumns = document.getElementById(`${ruleId}_additionalColumns`);
             
             if (ruleType === 'single') {
                 secondColumn.style.display = 'none';
                 secondValue.style.display = 'none';
-            } else {
+                additionalColumns.style.display = 'none';
+            } else if (ruleType === 'and' || ruleType === 'or') {
                 secondColumn.style.display = 'block';
                 secondValue.style.display = 'block';
+                additionalColumns.style.display = 'block';
             }
         }
 
@@ -451,6 +469,54 @@
             selectedValues.forEach(value => {
                 valueSelect.innerHTML += `<option value="${value}">${value}</option>`;
             });
+        }
+
+        function addAdditionalColumn(ruleId) {
+            const additionalColumnsContainer = document.getElementById(`${ruleId}_additionalColumnsContainer`);
+            const existingColumns = additionalColumnsContainer.children.length;
+            const newColumnNum = existingColumns + 3; // Start from 3 since we have 1 and 2 already
+            
+            if (newColumnNum > 6) {
+                alert('Maximum 6 columns allowed per rule');
+                return;
+            }
+            
+            const newColumnHtml = `
+                <div class="row mb-3" id="${ruleId}_additional_${newColumnNum}">
+                    <div class="col-md-2">
+                        <label class="form-label">Column ${newColumnNum}</label>
+                        <select class="form-select" onchange="updateColumnValues('${ruleId}', ${newColumnNum}, this.value)">
+                            <option value="">Select Column</option>
+                            ${Object.keys(columnData).map(col => `<option value="${col}">${col}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Value ${newColumnNum}</label>
+                        <div class="value-selection-container" id="${ruleId}_value${newColumnNum}_container">
+                            <select class="form-select" id="${ruleId}_value${newColumnNum}" onchange="updateValueSelection('${ruleId}', ${newColumnNum})">
+                                <option value="">Select Value(s)</option>
+                            </select>
+                            <div class="checkbox-container" id="${ruleId}_value${newColumnNum}_checkboxes" style="display: none;">
+                                <!-- Checkboxes will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeAdditionalColumn('${ruleId}', ${newColumnNum})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            additionalColumnsContainer.insertAdjacentHTML('beforeend', newColumnHtml);
+        }
+        
+        function removeAdditionalColumn(ruleId, columnNum) {
+            const additionalColumn = document.getElementById(`${ruleId}_additional_${columnNum}`);
+            if (additionalColumn) {
+                additionalColumn.remove();
+            }
         }
 
         function removeRule(ruleId) {
@@ -539,10 +605,44 @@
                     }
                 }
                 
+                // Get additional columns (3-6) for AND/OR logic
+                const additionalColumns = [];
+                const additionalValues = [];
+                
+                if (ruleType === 'and' || ruleType === 'or') {
+                    for (let i = 3; i <= 6; i++) {
+                        const additionalColumn = document.getElementById(`${ruleId}_additional_${i}`);
+                        if (additionalColumn) {
+                            const columnSelect = additionalColumn.querySelector('select[onchange*="updateColumnValues"]');
+                            const valueCheckboxes = document.getElementById(`${ruleId}_value${i}_checkboxes`);
+                            
+                            if (columnSelect && columnSelect.value) {
+                                additionalColumns.push(columnSelect.value);
+                                
+                                let values = [];
+                                if (valueCheckboxes) {
+                                    const checkedBoxes = valueCheckboxes.querySelectorAll('.form-check-input:checked');
+                                    values = Array.from(checkedBoxes).map(checkbox => checkbox.value);
+                                }
+                                
+                                // Fallback to dropdown
+                                if (values.length === 0) {
+                                    const valueSelect = document.getElementById(`${ruleId}_value${i}`);
+                                    if (valueSelect && valueSelect.value) {
+                                        values = [valueSelect.value];
+                                    }
+                                }
+                                
+                                additionalValues.push(values);
+                            }
+                        }
+                    }
+                }
+                
                 const customNameElement = document.getElementById(`${ruleId}_customName`);
                 const customName = customNameElement ? customNameElement.value : '';
                 
-                console.log(`Rule data:`, { ruleType, column1, value1, column2, value2, customName }); // Debug log
+                console.log(`Rule data:`, { ruleType, column1, value1, column2, value2, additionalColumns, additionalValues, customName }); // Debug log
                 
                 if (!column1 || value1.length === 0) {
                     showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
@@ -554,12 +654,22 @@
                     return;
                 }
                 
+                // Validate additional columns
+                for (let i = 0; i < additionalColumns.length; i++) {
+                    if (!additionalColumns[i] || additionalValues[i].length === 0) {
+                        showError(`Please fill in all required fields for additional column ${i + 3} in rule ${ruleId.replace('rule_', '')}`);
+                        return;
+                    }
+                }
+                
                 rulesData.push({
                     rule_type: ruleType,
                     column1: column1,
                     value1: value1,
                     column2: column2,
                     value2: value2,
+                    additional_columns: additionalColumns,
+                    additional_values: additionalValues,
                     custom_name: customName
                 });
             });
@@ -758,7 +868,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <div class="container">
-            <p class="mb-0">© 2025, Developed by Elias for Work Project Purpose</p>
+            <p class="mb-0">© 2025, Developed for Work Project Purpose</p>
         </div>
     </footer>
 </body>
