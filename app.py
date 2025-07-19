@@ -42,6 +42,13 @@ def generate_filename(rule_data):
         col = rule_data['column1']
         val = rule_data['value1']
         return f"{col}_{val}.xlsx"
+    elif rule_type == 'multiple':
+        col = rule_data['column1']
+        value1 = rule_data['value1']
+        multiple_values = rule_data.get('multiple_values', [])
+        all_values = [value1] + multiple_values
+        values_str = '_'.join(all_values)
+        return f"{col}_{values_str}.xlsx"
     elif rule_type == 'and':
         col1 = rule_data['column1']
         val1 = rule_data['value1']
@@ -65,6 +72,15 @@ def apply_rule(df, rule_data):
         column = rule_data['column1']
         value = rule_data['value1']
         return df[df[column] == value]
+    
+    elif rule_type == 'multiple':
+        column = rule_data['column1']
+        value1 = rule_data['value1']
+        multiple_values = rule_data.get('multiple_values', [])
+        
+        # Combine the first value with additional values
+        all_values = [value1] + multiple_values
+        return df[df[column].isin(all_values)]
     
     elif rule_type == 'and':
         col1 = rule_data['column1']

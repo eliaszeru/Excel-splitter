@@ -54,16 +54,17 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        .company-logo {
-            height: 60px;
-            width: 60px;
+        .company-logo-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
             transition: all 0.3s ease;
-            filter: none; /* Remove filter for SVG */
-            padding: 5px;
-            border-radius: 50%;
         }
-        .company-logo:hover {
-            transform: scale(1.1);
+        .company-logo-text:hover {
+            transform: scale(1.05);
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
         }
         .logo-container {
             display: flex;
@@ -84,33 +85,8 @@
                 </div>
                 <div class="col-md-4">
                     <div class="logo-container">
-                        <!-- Ralph Lauren Polo Player Logo -->
-                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="company-logo">
-                            <!-- Background circle -->
-                            <circle cx="40" cy="40" r="38" fill="#1e3a8a"/>
-                            <!-- Polo Player on Horseback -->
-                            <circle cx="40" cy="40" r="35" fill="#1e3a8a"/>
-                            <!-- Horse body -->
-                            <ellipse cx="40" cy="45" rx="18" ry="7" fill="#fbbf24"/>
-                            <!-- Horse head -->
-                            <ellipse cx="25" cy="40" rx="7" ry="5" fill="#fbbf24"/>
-                            <!-- Horse neck -->
-                            <path d="M 25 40 Q 30 42 35 45" stroke="#fbbf24" stroke-width="3" fill="none"/>
-                            <!-- Horse legs -->
-                            <rect x="30" y="50" width="2" height="8" fill="#fbbf24"/>
-                            <rect x="35" y="50" width="2" height="8" fill="#fbbf24"/>
-                            <rect x="45" y="50" width="2" height="8" fill="#fbbf24"/>
-                            <rect x="50" y="50" width="2" height="8" fill="#fbbf24"/>
-                            <!-- Rider body -->
-                            <ellipse cx="40" cy="35" rx="5" ry="8" fill="#fbbf24"/>
-                            <!-- Rider head -->
-                            <circle cx="40" cy="22" r="3" fill="#fbbf24"/>
-                            <!-- Polo mallet raised in air -->
-                            <line x1="40" y1="25" x2="40" y2="15" stroke="#fbbf24" stroke-width="2"/>
-                            <line x1="40" y1="15" x2="45" y2="10" stroke="#fbbf24" stroke-width="2"/>
-                            <!-- Horse tail -->
-                            <path d="M 55 40 Q 65 35 60 45" stroke="#fbbf24" stroke-width="2" fill="none"/>
-                        </svg>
+                        <!-- Ralph Lauren Text Logo -->
+                        <h2 class="company-logo-text mb-0">RALPH LAUREN</h2>
                     </div>
                 </div>
             </div>
@@ -323,6 +299,7 @@
                                 <label class="form-label">Rule Type</label>
                                 <select class="form-select" onchange="updateRuleType('${ruleId}', this.value)">
                                     <option value="single">Single Column</option>
+                                    <option value="multiple">Multiple Values</option>
                                     <option value="and">AND Logic</option>
                                     <option value="or">OR Logic</option>
                                 </select>
@@ -339,6 +316,13 @@
                                 <select class="form-select" id="${ruleId}_value1">
                                     <option value="">Select Value</option>
                                 </select>
+                            </div>
+                            <div class="col-md-2" id="${ruleId}_multipleValues" style="display: none;">
+                                <label class="form-label">Additional Values</label>
+                                <select class="form-select" id="${ruleId}_value1_multiple" multiple>
+                                    <option value="">Select Values</option>
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                             </div>
                             <div class="col-md-2" id="${ruleId}_secondColumn" style="display: none;">
                                 <label class="form-label">Column 2</label>
@@ -372,13 +356,20 @@
         }
 
         function updateRuleType(ruleId, ruleType) {
+            const multipleValues = document.getElementById(`${ruleId}_multipleValues`);
             const secondColumn = document.getElementById(`${ruleId}_secondColumn`);
             const secondValue = document.getElementById(`${ruleId}_secondValue`);
             
             if (ruleType === 'single') {
+                multipleValues.style.display = 'none';
+                secondColumn.style.display = 'none';
+                secondValue.style.display = 'none';
+            } else if (ruleType === 'multiple') {
+                multipleValues.style.display = 'block';
                 secondColumn.style.display = 'none';
                 secondValue.style.display = 'none';
             } else {
+                multipleValues.style.display = 'none';
                 secondColumn.style.display = 'block';
                 secondValue.style.display = 'block';
             }
@@ -386,11 +377,20 @@
 
         function updateColumnValues(ruleId, columnNum, columnName) {
             const valueSelect = document.getElementById(`${ruleId}_value${columnNum}`);
+            const multipleSelect = document.getElementById(`${ruleId}_value1_multiple`);
+            
+            // Clear both selects
             valueSelect.innerHTML = '<option value="">Select Value</option>';
+            if (multipleSelect) {
+                multipleSelect.innerHTML = '<option value="">Select Values</option>';
+            }
             
             if (columnName && columnData[columnName]) {
                 columnData[columnName].forEach(value => {
                     valueSelect.innerHTML += `<option value="${value}">${value}</option>`;
+                    if (multipleSelect) {
+                        multipleSelect.innerHTML += `<option value="${value}">${value}</option>`;
+                    }
                 });
             }
         }
@@ -418,8 +418,22 @@
                 const value2 = document.getElementById(`${ruleId}_value2`).value;
                 const customName = document.getElementById(`${ruleId}_customName`).value;
                 
+                // Handle multiple values selection
+                let multipleValues = [];
+                if (ruleType === 'multiple') {
+                    const multipleSelect = document.getElementById(`${ruleId}_value1_multiple`);
+                    if (multipleSelect) {
+                        multipleValues = Array.from(multipleSelect.selectedOptions).map(option => option.value);
+                    }
+                }
+                
                 if (!column1 || !value1) {
                     showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
+                    return;
+                }
+                
+                if (ruleType === 'multiple' && multipleValues.length === 0) {
+                    showError('Please select at least one additional value for rule ' + ruleId.replace('rule_', ''));
                     return;
                 }
                 
@@ -432,6 +446,7 @@
                     rule_type: ruleType,
                     column1: column1,
                     value1: value1,
+                    multiple_values: multipleValues,
                     column2: column2,
                     value2: value2,
                     custom_name: customName
@@ -546,5 +561,12 @@
             errorModal.show();
         }
     </script>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">© 2025, Developed by Elias for Work Project Purpose</p>
+        </div>
+    </footer>
 </body>
 </html> 
