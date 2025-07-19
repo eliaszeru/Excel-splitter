@@ -13,12 +13,16 @@ import tempfile
 import shutil
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this in production
+
+# Configuration from environment variables
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
+app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', 'development')
+app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
 
 # Configuration
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
-MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
+MAX_FILE_SIZE = int(os.environ.get('MAX_FILE_SIZE', 16 * 1024 * 1024))  # 16MB default
 
 # Create upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -103,7 +107,7 @@ def upload_file():
         file.seek(0)  # Reset to beginning
         
         if file_size > MAX_FILE_SIZE:
-            return jsonify({'error': 'File too large. Maximum size is 16MB.'}), 400
+            return jsonify({'error': f'File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB.'}), 400
         
         # Save file temporarily
         filename = secure_filename(file.filename)
@@ -221,4 +225,5 @@ def cleanup_files():
         return jsonify({'error': f'Error cleaning up files: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=port) 
