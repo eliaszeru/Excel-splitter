@@ -89,6 +89,31 @@
             background-color: #0d6efd;
             border-color: #0d6efd;
         }
+        .additional-column-row {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .add-column-btn {
+            transition: all 0.3s ease;
+        }
+        .add-column-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .rule-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .rule-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -310,7 +335,7 @@
             const ruleHtml = `
                 <div class="rule-card" id="${ruleId}">
                     <div class="card-body">
-                        <div class="row align-items-center">
+                        <div class="row align-items-end">
                             <div class="col-md-1">
                                 <span class="badge bg-primary">${ruleCounter}</span>
                             </div>
@@ -369,16 +394,19 @@
                             </div>
                         </div>
                         
-                        <!-- Additional columns for AND logic (3-6) -->
+                        <!-- Add Column Button Row -->
+                        <div class="row mt-3" id="${ruleId}_addColumnRow" style="display: none;">
+                            <div class="col-12">
+                                <button class="btn btn-outline-primary btn-sm add-column-btn" onclick="addAdditionalColumn('${ruleId}')" id="${ruleId}_addColumnBtn">
+                                    <i class="fas fa-plus-circle me-1"></i>Add Another Column
+                                </button>
+                                <small class="text-muted ms-2">(Up to 6 columns total)</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional columns for AND/OR logic (3-6) -->
                         <div id="${ruleId}_additionalColumns" style="display: none;">
                             <hr class="my-3">
-                            <div class="row">
-                                <div class="col-12 mb-2">
-                                    <button class="btn btn-outline-primary btn-sm" onclick="addAdditionalColumn('${ruleId}')" id="${ruleId}_addColumnBtn">
-                                        <i class="fas fa-plus me-1"></i>Add Another Column
-                                    </button>
-                                </div>
-                            </div>
                             <div id="${ruleId}_additionalColumnsContainer">
                                 <!-- Additional columns will be added here -->
                             </div>
@@ -395,15 +423,18 @@
             const secondColumn = document.getElementById(`${ruleId}_secondColumn`);
             const secondValue = document.getElementById(`${ruleId}_secondValue`);
             const additionalColumns = document.getElementById(`${ruleId}_additionalColumns`);
+            const addColumnRow = document.getElementById(`${ruleId}_addColumnRow`);
             
             if (ruleType === 'single') {
                 secondColumn.style.display = 'none';
                 secondValue.style.display = 'none';
                 additionalColumns.style.display = 'none';
+                addColumnRow.style.display = 'none';
             } else if (ruleType === 'and' || ruleType === 'or') {
                 secondColumn.style.display = 'block';
                 secondValue.style.display = 'block';
                 additionalColumns.style.display = 'block';
+                addColumnRow.style.display = 'block';
             }
         }
 
@@ -482,18 +513,18 @@
             }
             
             const newColumnHtml = `
-                <div class="row mb-3" id="${ruleId}_additional_${newColumnNum}">
+                <div class="row mb-3 align-items-end additional-column-row" id="${ruleId}_additional_${newColumnNum}">
                     <div class="col-md-2">
-                        <label class="form-label">Column ${newColumnNum}</label>
-                        <select class="form-select" onchange="updateColumnValues('${ruleId}', ${newColumnNum}, this.value)">
+                        <label class="form-label text-primary fw-bold">Column ${newColumnNum}</label>
+                        <select class="form-select border-primary" onchange="updateColumnValues('${ruleId}', ${newColumnNum}, this.value)">
                             <option value="">Select Column</option>
                             ${Object.keys(columnData).map(col => `<option value="${col}">${col}</option>`).join('')}
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Value ${newColumnNum}</label>
+                        <label class="form-label text-primary fw-bold">Value ${newColumnNum}</label>
                         <div class="value-selection-container" id="${ruleId}_value${newColumnNum}_container">
-                            <select class="form-select" id="${ruleId}_value${newColumnNum}" onchange="updateValueSelection('${ruleId}', ${newColumnNum})">
+                            <select class="form-select border-primary" id="${ruleId}_value${newColumnNum}" onchange="updateValueSelection('${ruleId}', ${newColumnNum})">
                                 <option value="">Select Value(s)</option>
                             </select>
                             <div class="checkbox-container" id="${ruleId}_value${newColumnNum}_checkboxes" style="display: none;">
@@ -502,20 +533,46 @@
                         </div>
                     </div>
                     <div class="col-md-1">
-                        <button class="btn btn-outline-danger btn-sm" onclick="removeAdditionalColumn('${ruleId}', ${newColumnNum})">
-                            <i class="fas fa-trash"></i>
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeAdditionalColumn('${ruleId}', ${newColumnNum})" title="Remove this column">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
             `;
             
             additionalColumnsContainer.insertAdjacentHTML('beforeend', newColumnHtml);
+            
+            // Update the add column button text to show remaining columns
+            const remainingColumns = 6 - newColumnNum;
+            const addColumnBtn = document.getElementById(`${ruleId}_addColumnBtn`);
+            if (addColumnBtn && remainingColumns > 0) {
+                addColumnBtn.innerHTML = `<i class="fas fa-plus-circle me-1"></i>Add Another Column (${remainingColumns} left)`;
+            } else if (addColumnBtn) {
+                addColumnBtn.innerHTML = `<i class="fas fa-check-circle me-1"></i>Maximum Columns Reached`;
+                addColumnBtn.disabled = true;
+                addColumnBtn.className = 'btn btn-outline-success btn-sm';
+            }
         }
         
         function removeAdditionalColumn(ruleId, columnNum) {
             const additionalColumn = document.getElementById(`${ruleId}_additional_${columnNum}`);
             if (additionalColumn) {
                 additionalColumn.remove();
+                
+                // Update the add column button text after removal
+                const additionalColumnsContainer = document.getElementById(`${ruleId}_additionalColumnsContainer`);
+                const remainingColumns = 6 - (additionalColumnsContainer.children.length + 2); // +2 for the first two columns
+                const addColumnBtn = document.getElementById(`${ruleId}_addColumnBtn`);
+                
+                if (addColumnBtn && remainingColumns > 0) {
+                    addColumnBtn.innerHTML = `<i class="fas fa-plus-circle me-1"></i>Add Another Column (${remainingColumns} left)`;
+                    addColumnBtn.disabled = false;
+                    addColumnBtn.className = 'btn btn-outline-primary btn-sm';
+                } else if (addColumnBtn) {
+                    addColumnBtn.innerHTML = `<i class="fas fa-plus-circle me-1"></i>Add Another Column`;
+                    addColumnBtn.disabled = false;
+                    addColumnBtn.className = 'btn btn-outline-primary btn-sm';
+                }
             }
         }
 
@@ -532,15 +589,16 @@
 
         function processRules() {
             console.log('=== PROCESS RULES STARTED ==='); // Debug log
+            console.log(`Total rules to process: ${rules.length}`); // Debug log
             const rulesData = [];
             
-            rules.forEach(ruleId => {
-                console.log(`Processing rule: ${ruleId}`); // Debug log
+            rules.forEach((ruleId, index) => {
+                console.log(`Processing rule ${index + 1}/${rules.length}: ${ruleId}`); // Debug log
                 const ruleElement = document.getElementById(ruleId);
                 
                 if (!ruleElement) {
                     console.error(`Rule element not found: ${ruleId}`);
-                    return;
+                    return; // Skip this rule, continue with next
                 }
                 
                 // Use more specific selectors to find the correct elements
@@ -555,7 +613,7 @@
                 if (!ruleTypeSelect || !column1Select) {
                     console.error(`Required select elements not found for rule: ${ruleId}`);
                     console.error(`Rule element HTML:`, ruleElement.innerHTML); // Debug log
-                    return;
+                    return; // Skip this rule, continue with next
                 }
                 
                 const ruleType = ruleTypeSelect.value;
@@ -644,24 +702,30 @@
                 
                 console.log(`Rule data:`, { ruleType, column1, value1, column2, value2, additionalColumns, additionalValues, customName }); // Debug log
                 
+                // Validation - but don't stop processing, just skip this rule
                 if (!column1 || value1.length === 0) {
-                    showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
-                    return;
+                    console.error(`Rule ${index + 1} validation failed: Missing column1 or value1`);
+                    showError(`Rule ${index + 1}: Please fill in all required fields for column 1`);
+                    return; // Skip this rule, continue with next
                 }
                 
                 if ((ruleType === 'and' || ruleType === 'or') && (!column2 || value2.length === 0)) {
-                    showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
-                    return;
+                    console.error(`Rule ${index + 1} validation failed: Missing column2 or value2`);
+                    showError(`Rule ${index + 1}: Please fill in all required fields for column 2`);
+                    return; // Skip this rule, continue with next
                 }
                 
                 // Validate additional columns
                 for (let i = 0; i < additionalColumns.length; i++) {
                     if (!additionalColumns[i] || additionalValues[i].length === 0) {
-                        showError(`Please fill in all required fields for additional column ${i + 3} in rule ${ruleId.replace('rule_', '')}`);
-                        return;
+                        console.error(`Rule ${index + 1} validation failed: Missing additional column ${i + 3}`);
+                        showError(`Rule ${index + 1}: Please fill in all required fields for additional column ${i + 3}`);
+                        return; // Skip this rule, continue with next
                     }
                 }
                 
+                // If we get here, the rule is valid
+                console.log(`Rule ${index + 1} is valid, adding to rulesData`); // Debug log
                 rulesData.push({
                     rule_type: ruleType,
                     column1: column1,
@@ -674,8 +738,10 @@
                 });
             });
             
+            console.log(`Valid rules found: ${rulesData.length} out of ${rules.length} total rules`); // Debug log
+            
             if (rulesData.length === 0) {
-                showError('Please add at least one rule');
+                showError('No valid rules found. Please check your rule configurations.');
                 return;
             }
             
