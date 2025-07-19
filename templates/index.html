@@ -54,6 +54,26 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
+        .company-logo {
+            height: 40px;
+            width: auto;
+            filter: brightness(0) invert(1); /* Makes logo white */
+            transition: all 0.3s ease;
+        }
+        .company-logo:hover {
+            transform: scale(1.05);
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .logo-text {
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 10px;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -65,8 +85,14 @@
                     <h1 class="mb-0"><i class="fas fa-file-excel me-2"></i>Excel Splitter</h1>
                     <p class="mb-0 opacity-75">Split your Excel files into multiple files based on custom rules</p>
                 </div>
-                <div class="col-md-4 text-end">
-                    <span class="badge bg-light text-dark">Ralph Lauren</span>
+                <div class="col-md-4">
+                    <div class="logo-container">
+                        <!-- Ralph Lauren Logo -->
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Ralph_Lauren_logo.svg/2560px-Ralph_Lauren_logo.svg.png" 
+                             alt="Ralph Lauren" 
+                             class="company-logo">
+                        <span class="logo-text">Ralph Lauren</span>
+                    </div>
                 </div>
             </div>
         </div>
