@@ -40,27 +40,25 @@ def generate_filename(rule_data):
     rule_type = rule_data['rule_type']
     if rule_type == 'single':
         col = rule_data['column1']
-        val = rule_data['value1']
-        return f"{col}_{val}.xlsx"
-    elif rule_type == 'multiple':
-        col = rule_data['column1']
-        value1 = rule_data['value1']
-        multiple_values = rule_data.get('multiple_values', [])
-        all_values = [value1] + multiple_values
-        values_str = '_'.join(all_values)
+        values = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
+        values_str = '_'.join(values)
         return f"{col}_{values_str}.xlsx"
     elif rule_type == 'and':
         col1 = rule_data['column1']
-        val1 = rule_data['value1']
+        values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
-        val2 = rule_data['value2']
-        return f"{col1}_{val1}_{col2}_{val2}.xlsx"
+        values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
+        values1_str = '_'.join(values1)
+        values2_str = '_'.join(values2)
+        return f"{col1}_{values1_str}_{col2}_{values2_str}.xlsx"
     elif rule_type == 'or':
         col1 = rule_data['column1']
-        val1 = rule_data['value1']
+        values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
-        val2 = rule_data['value2']
-        return f"{col1}_{val1}_OR_{col2}_{val2}.xlsx"
+        values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
+        values1_str = '_'.join(values1)
+        values2_str = '_'.join(values2)
+        return f"{col1}_{values1_str}_OR_{col2}_{values2_str}.xlsx"
     
     return f"split_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
 
@@ -70,31 +68,22 @@ def apply_rule(df, rule_data):
     
     if rule_type == 'single':
         column = rule_data['column1']
-        value = rule_data['value1']
-        return df[df[column] == value]
-    
-    elif rule_type == 'multiple':
-        column = rule_data['column1']
-        value1 = rule_data['value1']
-        multiple_values = rule_data.get('multiple_values', [])
-        
-        # Combine the first value with additional values
-        all_values = [value1] + multiple_values
-        return df[df[column].isin(all_values)]
+        values = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
+        return df[df[column].isin(values)]
     
     elif rule_type == 'and':
         col1 = rule_data['column1']
-        val1 = rule_data['value1']
+        values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
-        val2 = rule_data['value2']
-        return df[(df[col1] == val1) & (df[col2] == val2)]
+        values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
+        return df[(df[col1].isin(values1)) & (df[col2].isin(values2))]
     
     elif rule_type == 'or':
         col1 = rule_data['column1']
-        val1 = rule_data['value1']
+        values1 = rule_data['value1'] if isinstance(rule_data['value1'], list) else [rule_data['value1']]
         col2 = rule_data['column2']
-        val2 = rule_data['value2']
-        return df[(df[col1] == val1) | (df[col2] == val2)]
+        values2 = rule_data['value2'] if isinstance(rule_data['value2'], list) else [rule_data['value2']]
+        return df[(df[col1].isin(values1)) | (df[col2].isin(values2))]
     
     return df
 

@@ -299,7 +299,6 @@
                                 <label class="form-label">Rule Type</label>
                                 <select class="form-select" onchange="updateRuleType('${ruleId}', this.value)">
                                     <option value="single">Single Column</option>
-                                    <option value="multiple">Multiple Values</option>
                                     <option value="and">AND Logic</option>
                                     <option value="or">OR Logic</option>
                                 </select>
@@ -313,14 +312,8 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">Value 1</label>
-                                <select class="form-select" id="${ruleId}_value1">
-                                    <option value="">Select Value</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2" id="${ruleId}_multipleValues" style="display: none;">
-                                <label class="form-label">Additional Values</label>
-                                <select class="form-select" id="${ruleId}_value1_multiple" multiple>
-                                    <option value="">Select Values</option>
+                                <select class="form-select" id="${ruleId}_value1" multiple>
+                                    <option value="">Select Value(s)</option>
                                 </select>
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                             </div>
@@ -333,9 +326,10 @@
                             </div>
                             <div class="col-md-2" id="${ruleId}_secondValue" style="display: none;">
                                 <label class="form-label">Value 2</label>
-                                <select class="form-select" id="${ruleId}_value2">
-                                    <option value="">Select Value</option>
+                                <select class="form-select" id="${ruleId}_value2" multiple>
+                                    <option value="">Select Value(s)</option>
                                 </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">File Name (Optional)</label>
@@ -356,20 +350,13 @@
         }
 
         function updateRuleType(ruleId, ruleType) {
-            const multipleValues = document.getElementById(`${ruleId}_multipleValues`);
             const secondColumn = document.getElementById(`${ruleId}_secondColumn`);
             const secondValue = document.getElementById(`${ruleId}_secondValue`);
             
             if (ruleType === 'single') {
-                multipleValues.style.display = 'none';
-                secondColumn.style.display = 'none';
-                secondValue.style.display = 'none';
-            } else if (ruleType === 'multiple') {
-                multipleValues.style.display = 'block';
                 secondColumn.style.display = 'none';
                 secondValue.style.display = 'none';
             } else {
-                multipleValues.style.display = 'none';
                 secondColumn.style.display = 'block';
                 secondValue.style.display = 'block';
             }
@@ -377,20 +364,13 @@
 
         function updateColumnValues(ruleId, columnNum, columnName) {
             const valueSelect = document.getElementById(`${ruleId}_value${columnNum}`);
-            const multipleSelect = document.getElementById(`${ruleId}_value1_multiple`);
             
             // Clear both selects
-            valueSelect.innerHTML = '<option value="">Select Value</option>';
-            if (multipleSelect) {
-                multipleSelect.innerHTML = '<option value="">Select Values</option>';
-            }
+            valueSelect.innerHTML = '<option value="">Select Value(s)</option>';
             
             if (columnName && columnData[columnName]) {
                 columnData[columnName].forEach(value => {
                     valueSelect.innerHTML += `<option value="${value}">${value}</option>`;
-                    if (multipleSelect) {
-                        multipleSelect.innerHTML += `<option value="${value}">${value}</option>`;
-                    }
                 });
             }
         }
@@ -413,31 +393,17 @@
                 const ruleElement = document.getElementById(ruleId);
                 const ruleType = ruleElement.querySelector('select').value;
                 const column1 = ruleElement.querySelector('select:nth-of-type(2)').value;
-                const value1 = document.getElementById(`${ruleId}_value1`).value;
+                const value1 = Array.from(document.getElementById(`${ruleId}_value1`).selectedOptions).map(option => option.value);
                 const column2 = ruleElement.querySelector('select:nth-of-type(3)').value;
-                const value2 = document.getElementById(`${ruleId}_value2`).value;
+                const value2 = Array.from(document.getElementById(`${ruleId}_value2`).selectedOptions).map(option => option.value);
                 const customName = document.getElementById(`${ruleId}_customName`).value;
                 
-                // Handle multiple values selection
-                let multipleValues = [];
-                if (ruleType === 'multiple') {
-                    const multipleSelect = document.getElementById(`${ruleId}_value1_multiple`);
-                    if (multipleSelect) {
-                        multipleValues = Array.from(multipleSelect.selectedOptions).map(option => option.value);
-                    }
-                }
-                
-                if (!column1 || !value1) {
+                if (!column1 || value1.length === 0) {
                     showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
                     return;
                 }
                 
-                if (ruleType === 'multiple' && multipleValues.length === 0) {
-                    showError('Please select at least one additional value for rule ' + ruleId.replace('rule_', ''));
-                    return;
-                }
-                
-                if ((ruleType === 'and' || ruleType === 'or') && (!column2 || !value2)) {
+                if ((ruleType === 'and' || ruleType === 'or') && (!column2 || value2.length === 0)) {
                     showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
                     return;
                 }
@@ -446,7 +412,6 @@
                     rule_type: ruleType,
                     column1: column1,
                     value1: value1,
-                    multiple_values: multipleValues,
                     column2: column2,
                     value2: value2,
                     custom_name: customName
