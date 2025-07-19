@@ -31,6 +31,9 @@ MAX_FILE_SIZE = int(os.environ.get('MAX_FILE_SIZE', 16 * 1024 * 1024))  # 16MB d
 # Create upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Global storage for file paths (session alternative)
+file_storage = {}
+
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -151,19 +154,22 @@ def upload_file():
             # Convert to strings and limit to first 50 unique values
             column_values[col] = [str(val) for val in unique_values[:50]]
         
-        # Store file path in session
+        # Store file path in global storage and session
+        file_storage[session_id] = file_path
+        session['session_id'] = session_id
         session['file_path'] = file_path
         session['columns'] = columns
         session.permanent = True  # Make session permanent
         
-        print(f"Session file_path: {session.get('file_path')}")  # Debug log
         print(f"Session ID: {session_id}")  # Debug log
+        print(f"File stored in global storage: {file_storage.get(session_id)}")  # Debug log
         
         return jsonify({
             'success': True,
             'columns': columns,
             'column_values': column_values,
-            'total_rows': len(df)
+            'total_rows': len(df),
+            'session_id': session_id
         })
         
     except Exception as e:
@@ -183,8 +189,18 @@ def process_rules():
         if not rules:
             return jsonify({'error': 'No rules provided'}), 400
         
+        # Try to get file path from multiple sources
+        session_id = session.get('session_id')
         file_path = session.get('file_path')
+        
+        # If session doesn't have it, try global storage
+        if not file_path and session_id:
+            file_path = file_storage.get(session_id)
+        
+        print(f"Session ID: {session_id}")  # Debug log
         print(f"File path from session: {file_path}")  # Debug log
+        print(f"File path from global storage: {file_storage.get(session_id) if session_id else 'No session ID'}")  # Debug log
+        
         if not file_path or not os.path.exists(file_path):
             print(f"File exists: {os.path.exists(file_path) if file_path else False}")  # Debug log
             return jsonify({'error': 'No file uploaded or file not found'}), 400
