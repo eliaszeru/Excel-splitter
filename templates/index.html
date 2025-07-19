@@ -468,9 +468,11 @@
         }
 
         function processRules() {
+            console.log('=== PROCESS RULES STARTED ==='); // Debug log
             const rulesData = [];
             
             rules.forEach(ruleId => {
+                console.log(`Processing rule: ${ruleId}`); // Debug log
                 const ruleElement = document.getElementById(ruleId);
                 const ruleType = ruleElement.querySelector('select').value;
                 const column1 = ruleElement.querySelector('select:nth-of-type(2)').value;
@@ -484,6 +486,8 @@
                 const value2 = Array.from(value2Checkboxes.querySelectorAll('.form-check-input:checked')).map(checkbox => checkbox.value);
                 
                 const customName = document.getElementById(`${ruleId}_customName`).value;
+                
+                console.log(`Rule data:`, { ruleType, column1, value1, column2, value2, customName }); // Debug log
                 
                 if (!column1 || value1.length === 0) {
                     showError('Please fill in all required fields for rule ' + ruleId.replace('rule_', ''));
@@ -510,21 +514,26 @@
                 return;
             }
             
-            console.log('Sending rules data:', rulesData); // Debug log
+            console.log('Final rules data to send:', rulesData); // Debug log
+            console.log('Session ID:', currentSessionId); // Debug log
             
             // Show loading modal
             const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
             loadingModal.show();
+            
+            const requestData = { 
+                rules: rulesData,
+                session_id: currentSessionId
+            };
+            
+            console.log('Sending request data:', requestData); // Debug log
             
             fetch('/process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    rules: rulesData,
-                    session_id: currentSessionId
-                })
+                body: JSON.stringify(requestData)
             })
             .then(response => {
                 console.log('Response status:', response.status); // Debug log
@@ -535,8 +544,10 @@
                 loadingModal.hide();
                 
                 if (data.success) {
+                    console.log('Success! Files generated:', data.files); // Debug log
                     displayResults(data.files);
                 } else {
+                    console.error('Error from server:', data.error); // Debug log
                     showError(data.error);
                 }
             })
@@ -548,9 +559,11 @@
         }
 
         function displayResults(files) {
+            console.log('Displaying results for files:', files); // Debug log
             const container = document.getElementById('resultsContainer');
             
             if (files.length === 0) {
+                console.log('No files to display'); // Debug log
                 container.innerHTML = `
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -558,6 +571,7 @@
                     </div>
                 `;
             } else {
+                console.log(`Displaying ${files.length} files`); // Debug log
                 let html = `
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle me-2"></i>
@@ -565,7 +579,8 @@
                     </div>
                 `;
                 
-                files.forEach(file => {
+                files.forEach((file, index) => {
+                    console.log(`File ${index + 1}:`, file); // Debug log
                     html += `
                         <div class="file-item">
                             <div class="row align-items-center">
@@ -584,6 +599,7 @@
                 });
                 
                 container.innerHTML = html;
+                console.log('Results HTML generated and displayed'); // Debug log
             }
             
             document.getElementById('rulesSection').style.display = 'none';
