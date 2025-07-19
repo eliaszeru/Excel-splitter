@@ -410,10 +410,11 @@
             const rulesData = [];
             
             rules.forEach(ruleId => {
-                const ruleType = document.querySelector(`#${ruleId} select`).value;
-                const column1 = document.querySelector(`#${ruleId} select:nth-of-type(2)`).value;
+                const ruleElement = document.getElementById(ruleId);
+                const ruleType = ruleElement.querySelector('select').value;
+                const column1 = ruleElement.querySelector('select:nth-of-type(2)').value;
                 const value1 = document.getElementById(`${ruleId}_value1`).value;
-                const column2 = document.querySelector(`#${ruleId} select:nth-of-type(3)`).value;
+                const column2 = ruleElement.querySelector('select:nth-of-type(3)').value;
                 const value2 = document.getElementById(`${ruleId}_value2`).value;
                 const customName = document.getElementById(`${ruleId}_customName`).value;
                 
@@ -442,6 +443,8 @@
                 return;
             }
             
+            console.log('Sending rules data:', rulesData); // Debug log
+            
             // Show loading modal
             const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
             loadingModal.show();
@@ -453,8 +456,12 @@
                 },
                 body: JSON.stringify({ rules: rulesData })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status); // Debug log
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data); // Debug log
                 loadingModal.hide();
                 
                 if (data.success) {
@@ -464,6 +471,7 @@
                 }
             })
             .catch(error => {
+                console.error('Error:', error); // Debug log
                 loadingModal.hide();
                 showError('Error processing rules: ' + error.message);
             });

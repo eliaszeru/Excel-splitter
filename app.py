@@ -145,35 +145,46 @@ def upload_file():
 def process_rules():
     """Process rules and generate Excel files"""
     try:
+        print("=== PROCESS RULES CALLED ===")  # Debug log
         data = request.get_json()
+        print(f"Received data: {data}")  # Debug log
         rules = data.get('rules', [])
+        print(f"Rules: {rules}")  # Debug log
         
         if not rules:
             return jsonify({'error': 'No rules provided'}), 400
         
         file_path = session.get('file_path')
+        print(f"File path from session: {file_path}")  # Debug log
         if not file_path or not os.path.exists(file_path):
+            print(f"File exists: {os.path.exists(file_path) if file_path else False}")  # Debug log
             return jsonify({'error': 'No file uploaded or file not found'}), 400
         
         # Read the Excel file
         df = pd.read_excel(file_path)
+        print(f"DataFrame shape: {df.shape}")  # Debug log
         
         generated_files = []
         
         for rule in rules:
+            print(f"Processing rule: {rule}")  # Debug log
             # Apply rule to get filtered data
             filtered_df = apply_rule(df, rule)
+            print(f"Filtered data shape: {filtered_df.shape}")  # Debug log
             
             # Skip if no data matches the rule
             if len(filtered_df) == 0:
+                print("No data matches rule, skipping")  # Debug log
                 continue
             
             # Generate filename
             filename = generate_filename(rule)
+            print(f"Generated filename: {filename}")  # Debug log
             
             # Save filtered data to new Excel file
             output_path = os.path.join(UPLOAD_FOLDER, filename)
             filtered_df.to_excel(output_path, index=False)
+            print(f"Saved file to: {output_path}")  # Debug log
             
             generated_files.append({
                 'filename': filename,
@@ -181,6 +192,7 @@ def process_rules():
                 'download_url': f'/download/{filename}'
             })
         
+        print(f"Generated {len(generated_files)} files")  # Debug log
         return jsonify({
             'success': True,
             'files': generated_files,
@@ -188,6 +200,7 @@ def process_rules():
         })
         
     except Exception as e:
+        print(f"Error in process_rules: {str(e)}")  # Debug log
         return jsonify({'error': f'Error processing rules: {str(e)}'}), 500
 
 @app.route('/download/<filename>')
