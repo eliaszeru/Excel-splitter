@@ -169,6 +169,9 @@
                     <button class="btn btn-custom btn-lg" onclick="processRules()" id="processBtn">
                         <i class="fas fa-magic me-2"></i>Generate Files
                     </button>
+                    <button class="btn btn-outline-secondary ms-2" onclick="testDownload()" id="testDownloadBtn">
+                        <i class="fas fa-download me-2"></i>Test Download
+                    </button>
                 </div>
             </div>
         </div>
@@ -598,28 +601,60 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Downloading...';
                 button.disabled = true;
                 
-                // Reset button after 2 seconds
+                // Reset button after 3 seconds
                 setTimeout(() => {
                     button.innerHTML = originalText;
                     button.disabled = false;
-                }, 2000);
+                }, 3000);
             }
             
-            // Simple and reliable download method
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.style.display = 'none';
-            
-            // Add to DOM, click, and remove
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Also try opening in new tab as fallback after a short delay
-            setTimeout(() => {
-                window.open(url, '_blank');
-            }, 500);
+            // Method 1: Try fetch with blob
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create a blob URL
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    
+                    // Add to page and click
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // Cleanup
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(blobUrl);
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('Download failed:', error);
+                    
+                    // Method 2: Fallback - direct link
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Method 3: Final fallback - open in new window
+                    setTimeout(() => {
+                        window.open(url, '_blank');
+                    }, 1000);
+                });
         }
 
         function startOver() {
@@ -646,6 +681,55 @@
             document.getElementById('errorMessage').textContent = message;
             const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
             errorModal.show();
+        }
+
+        function testDownload() {
+            const testUrl = '/test-download'; // Assuming a test endpoint
+            const testFilename = 'test_download.xlsx'; // Example filename
+
+            // Get the download button and show loading state
+            const buttonId = `testDownloadBtn`;
+            const button = document.getElementById(buttonId);
+            if (button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Downloading...';
+                button.disabled = true;
+                
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 3000);
+            }
+
+            fetch(testUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = testFilename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(blobUrl);
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('Test download failed:', error);
+                    showError('Error during test download: ' + error.message);
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                });
         }
     </script>
 

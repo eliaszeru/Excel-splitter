@@ -244,6 +244,41 @@ def process_rules():
         print(f"Error in process_rules: {str(e)}")  # Debug log
         return jsonify({'error': f'Error processing rules: {str(e)}'}), 500
 
+@app.route('/test-download')
+def test_download():
+    """Test download functionality"""
+    try:
+        print("=== TEST DOWNLOAD REQUESTED ===")  # Debug log
+        
+        # Create a simple test Excel file
+        import pandas as pd
+        
+        # Create test data
+        test_data = {
+            'Name': ['Test User 1', 'Test User 2', 'Test User 3'],
+            'Age': [25, 30, 35],
+            'City': ['New York', 'London', 'Paris']
+        }
+        
+        df = pd.DataFrame(test_data)
+        
+        # Save to temporary file
+        test_file_path = os.path.join(UPLOAD_FOLDER, 'test_download.xlsx')
+        df.to_excel(test_file_path, index=False)
+        
+        print(f"Test file created: {test_file_path}")  # Debug log
+        
+        return send_file(
+            test_file_path,
+            as_attachment=True,
+            download_name='test_download.xlsx',
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        print(f"Error in test_download: {str(e)}")  # Debug log
+        return jsonify({'error': f'Error creating test download: {str(e)}'}), 500
+
 @app.route('/download/<filename>')
 def download_file(filename):
     """Download generated Excel file"""
