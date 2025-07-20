@@ -261,33 +261,42 @@ def process_rules():
         
         generated_files = []
         
-        for rule in rules:
-            print(f"Processing rule: {rule}")  # Debug log
-            # Apply rule to get filtered data
-            filtered_df = apply_rule(df, rule)
-            print(f"Filtered data shape: {filtered_df.shape}")  # Debug log
-            
-            # Skip if no data matches the rule
-            if len(filtered_df) == 0:
-                print("No data matches rule, skipping")  # Debug log
-                continue
-            
-            # Generate filename
-            filename = generate_filename(rule)
-            print(f"Generated filename: {filename}")  # Debug log
-            
-            # Save filtered data to new Excel file
-            output_path = os.path.join(UPLOAD_FOLDER, filename)
-            filtered_df.to_excel(output_path, index=False)
-            print(f"Saved file to: {output_path}")  # Debug log
-            
-            generated_files.append({
-                'filename': filename,
-                'rows': len(filtered_df),
-                'download_url': f'/download/{filename}'
-            })
+        print(f"Starting to process {len(rules)} rules...")  # Debug log
         
-        print(f"Generated {len(generated_files)} files")  # Debug log
+        for i, rule in enumerate(rules):
+            print(f"Processing rule {i + 1}/{len(rules)}: {rule}")  # Debug log
+            try:
+                # Apply rule to get filtered data
+                filtered_df = apply_rule(df, rule)
+                print(f"Rule {i + 1} filtered data shape: {filtered_df.shape}")  # Debug log
+                
+                # Skip if no data matches the rule
+                if len(filtered_df) == 0:
+                    print(f"Rule {i + 1}: No data matches rule, skipping")  # Debug log
+                    continue
+                
+                # Generate filename
+                filename = generate_filename(rule)
+                print(f"Rule {i + 1} generated filename: {filename}")  # Debug log
+                
+                # Save filtered data to new Excel file
+                output_path = os.path.join(UPLOAD_FOLDER, filename)
+                filtered_df.to_excel(output_path, index=False)
+                print(f"Rule {i + 1} saved file to: {output_path}")  # Debug log
+                
+                generated_files.append({
+                    'filename': filename,
+                    'rows': len(filtered_df),
+                    'download_url': f'/download/{filename}'
+                })
+                print(f"Rule {i + 1} added to generated_files. Total so far: {len(generated_files)}")  # Debug log
+                
+            except Exception as e:
+                print(f"Error processing rule {i + 1}: {str(e)}")  # Debug log
+                continue
+        
+        print(f"Final result: Generated {len(generated_files)} files out of {len(rules)} rules")  # Debug log
+        print(f"Generated files: {generated_files}")  # Debug log
         return jsonify({
             'success': True,
             'files': generated_files,

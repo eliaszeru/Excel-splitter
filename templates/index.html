@@ -817,7 +817,11 @@
         }
 
         function displayResults(files) {
+            console.log('=== DISPLAY RESULTS STARTED ==='); // Debug log
             console.log('Displaying results for files:', files); // Debug log
+            console.log(`Number of files received: ${files.length}`); // Debug log
+            console.log('Files array:', JSON.stringify(files, null, 2)); // Debug log
+            
             const container = document.getElementById('resultsContainer');
             
             if (files.length === 0) {
@@ -838,7 +842,7 @@
                 `;
                 
                 files.forEach((file, index) => {
-                    console.log(`File ${index + 1}:`, file); // Debug log
+                    console.log(`Processing file ${index + 1}/${files.length}:`, file); // Debug log
                     html += `
                         <div class="file-item">
                             <div class="row align-items-center">
@@ -858,6 +862,7 @@
                 
                 container.innerHTML = html;
                 console.log('Results HTML generated and displayed'); // Debug log
+                console.log('HTML length:', html.length); // Debug log
             }
             
             document.getElementById('rulesSection').style.display = 'none';
