@@ -124,6 +124,7 @@
                 <div class="col-md-8">
                     <h1 class="mb-0"><i class="fas fa-file-excel me-2"></i>Excel Splitter</h1>
                     <p class="mb-0 opacity-75">Split your Excel files into multiple files based on custom rules</p>
+                    <p class="mb-0 fw-bold text-warning" style="font-size:1.1rem;">For separating <span class="text-info">Predictive Buy</span> master file</p>
                 </div>
                 <div class="col-md-4">
                     <div class="logo-container">
@@ -288,6 +289,10 @@
         function handleFile(file) {
             if (!file.name.match(/\.(xlsx|xls)$/)) {
                 showError('Please select a valid Excel file (.xlsx or .xls)');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                showError('File is too large. Please select a file smaller than 10MB.');
                 return;
             }
 
@@ -994,13 +999,6 @@
             }, 500);
         }
     </script>
-
-    <!-- Add Test File Button -->
-    <div class="text-center mt-2">
-        <button class="btn btn-outline-info" onclick="loadTestFile()">
-            <i class="fas fa-vial me-2"></i>Demo/Test File
-        </button>
-    </div>
 
     <!-- Footer -->
     <footer class="bg-dark text-white text-center py-3 mt-5">

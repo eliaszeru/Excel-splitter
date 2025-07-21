@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 import tempfile
 import shutil
 import logging
+import gc
 
 app = Flask(__name__)
 
@@ -27,7 +28,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 # Configuration
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
-MAX_FILE_SIZE = int(os.environ.get('MAX_FILE_SIZE', 16 * 1024 * 1024))  # 16MB default
+MAX_FILE_SIZE = int(os.environ.get('MAX_FILE_SIZE', 10 * 1024 * 1024))  # 10MB default
 
 # Create upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -325,6 +326,9 @@ def process_rules():
                     'download_url': f'/download/{filename}'
                 })
                 print(f"Rule {i + 1} added to generated_files. Total so far: {len(generated_files)}")  # Debug log
+                
+                del filtered_df
+                gc.collect()
                 
             except Exception as e:
                 logging.error(f"Error processing rule {i + 1}: {str(e)}", exc_info=True)
