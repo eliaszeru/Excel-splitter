@@ -608,7 +608,6 @@
         }
 
         function processRules() {
-            // Refresh rules array before processing
             refreshRulesArray();
             
             console.log('=== PROCESS RULES STARTED ==='); // Debug log
@@ -778,6 +777,8 @@
             // Show loading modal
             const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
             loadingModal.show();
+            const processBtn = document.getElementById('processBtn');
+            if (processBtn) processBtn.disabled = true;
             
             const requestData = { 
                 rules: rulesData,
@@ -793,25 +794,29 @@
                 },
                 body: JSON.stringify(requestData)
             })
-            .then(response => {
-                console.log('Response status:', response.status); // Debug log
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data); // Debug log
+            .then(async response => {
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // If not valid JSON, show raw text
+                    const text = await response.text();
+                    showError('Server error: ' + text);
+                    loadingModal.hide();
+                    if (processBtn) processBtn.disabled = false;
+                    return;
+                }
                 loadingModal.hide();
-                
+                if (processBtn) processBtn.disabled = false;
                 if (data.success) {
-                    console.log('Success! Files generated:', data.files); // Debug log
                     displayResults(data.files);
                 } else {
-                    console.error('Error from server:', data.error); // Debug log
-                    showError(data.error);
+                    showError(data.error || 'Unknown error occurred.');
                 }
             })
             .catch(error => {
-                console.error('Error:', error); // Debug log
                 loadingModal.hide();
+                if (processBtn) processBtn.disabled = false;
                 showError('Error processing rules: ' + error.message);
             });
         }
@@ -961,7 +966,41 @@
             const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
             errorModal.show();
         }
+
+        // Add a Test File button for demo mode
+        function loadTestFile() {
+            // Simulate loading a sample file and pre-filling a rule
+            document.getElementById('fileName').textContent = 'sample_data.xlsx';
+            document.getElementById('totalRows').textContent = '100';
+            document.getElementById('totalColumns').textContent = '13';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('rulesSection').style.display = 'block';
+            columnData = { 'Gender': ['Men', 'Women'], 'Color': ['Black', 'White'] };
+            clearAllRules();
+            addRule();
+            // Pre-fill the first rule
+            setTimeout(() => {
+                const ruleId = rules[0];
+                const ruleElement = document.getElementById(ruleId);
+                if (ruleElement) {
+                    const column1Select = ruleElement.querySelector('select[onchange*="updateColumnValues"][onchange*="1"]');
+                    if (column1Select) column1Select.value = 'Gender';
+                    updateColumnValues(ruleId, 1, 'Gender');
+                    const value1Checkboxes = document.getElementById(`${ruleId}_value1_checkboxes`);
+                    if (value1Checkboxes) {
+                        value1Checkboxes.querySelectorAll('input[type=checkbox]')[0].checked = true;
+                    }
+                }
+            }, 500);
+        }
     </script>
+
+    <!-- Add Test File Button -->
+    <div class="text-center mt-2">
+        <button class="btn btn-outline-info" onclick="loadTestFile()">
+            <i class="fas fa-vial me-2"></i>Demo/Test File
+        </button>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-dark text-white text-center py-3 mt-5">

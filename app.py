@@ -11,6 +11,7 @@ from flask import Flask, render_template, request, jsonify, send_file, session
 from werkzeug.utils import secure_filename
 import tempfile
 import shutil
+import logging
 
 app = Flask(__name__)
 
@@ -33,6 +34,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Global storage for file paths (session alternative)
 file_storage = {}
+
+# Set up error logging
+logging.basicConfig(filename='error.log', level=logging.ERROR, format='%(asctime)s %(levelname)s %(message)s')
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -158,6 +162,10 @@ def test_session():
         'file_exists': os.path.exists(session.get('file_path', '')) if session.get('file_path') else False
     })
 
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'ok'}), 200
+
 @app.route('/')
 def index():
     """Main page"""
@@ -196,17 +204,27 @@ def upload_file():
         print(f"File saved to: {file_path}")  # Debug log
         
         # Read Excel file
-        df = pd.read_excel(file_path)
-        print(f"DataFrame shape: {df.shape}")  # Debug log
+        try:
+            df = pd.read_excel(file_path)
+        except Exception as e:
+            logging.error(f"Error reading Excel file: {str(e)}")
+            return jsonify({'error': 'Failed to read Excel file. Please check the file format and ensure it is not corrupted.'}), 400
         
+        if df.empty or len(df.columns) == 0:
+            return jsonify({'error': 'The uploaded Excel file is empty or has no columns.'}), 400
+
         # Get column information
         columns = df.columns.tolist()
         column_values = {}
         
         for col in columns:
-            unique_values = df[col].dropna().unique().tolist()
-            # Convert to strings and limit to first 50 unique values
-            column_values[col] = [str(val) for val in unique_values[:50]]
+            try:
+                unique_values = df[col].dropna().unique().tolist()
+                # Convert to strings and limit to first 50 unique values
+                column_values[col] = [str(val) for val in unique_values[:50]]
+            except Exception as e:
+                logging.error(f"Error processing column '{col}': {str(e)}")
+                column_values[col] = []
         
         # Store file path in global storage and session
         file_storage[session_id] = file_path
@@ -227,7 +245,7 @@ def upload_file():
         })
         
     except Exception as e:
-        print(f"Error in upload_file: {str(e)}")  # Debug log
+        logging.error(f"Error in upload_file: {str(e)}", exc_info=True)
         return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
 @app.route('/process', methods=['POST'])
@@ -235,7 +253,9 @@ def process_rules():
     """Process rules and generate Excel files"""
     try:
         print("=== PROCESS RULES CALLED ===")  # Debug log
-        data = request.get_json()
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({'error': 'Invalid request. Please try again or refresh the page.'}), 400
         print(f"Received data: {data}")  # Debug log
         rules = data.get('rules', [])
         session_id = data.get('session_id')  # Get session ID from request
@@ -256,9 +276,15 @@ def process_rules():
             return jsonify({'error': 'No file uploaded or file not found'}), 400
         
         # Read the Excel file
-        df = pd.read_excel(file_path)
-        print(f"DataFrame shape: {df.shape}")  # Debug log
+        try:
+            df = pd.read_excel(file_path)
+        except Exception as e:
+            logging.error(f"Error reading Excel file during processing: {str(e)}")
+            return jsonify({'error': 'Failed to read Excel file during processing. The file may be corrupted or in an unsupported format.'}), 400
         
+        if df.empty or len(df.columns) == 0:
+            return jsonify({'error': 'The uploaded Excel file is empty or has no columns.'}), 400
+
         generated_files = []
         
         print(f"Starting to process {len(rules)} rules...")  # Debug log
@@ -266,6 +292,15 @@ def process_rules():
         for i, rule in enumerate(rules):
             print(f"Processing rule {i + 1}/{len(rules)}: {rule}")  # Debug log
             try:
+                # Validate rule structure
+                if not rule.get('column1') or not rule.get('value1'):
+                    return jsonify({'error': f'Rule {i+1}: Missing required column or value.'}), 400
+                if rule['rule_type'] in ['and', 'or'] and (not rule.get('column2') or not rule.get('value2')):
+                    return jsonify({'error': f'Rule {i+1}: Missing required column2 or value2.'}), 400
+                # Check columns exist
+                for col in [rule.get('column1'), rule.get('column2')] + rule.get('additional_columns', []):
+                    if col and col not in df.columns:
+                        return jsonify({'error': f'Rule {i+1}: Column "{col}" not found in the uploaded file.'}), 400
                 # Apply rule to get filtered data
                 filtered_df = apply_rule(df, rule)
                 print(f"Rule {i + 1} filtered data shape: {filtered_df.shape}")  # Debug log
@@ -292,7 +327,7 @@ def process_rules():
                 print(f"Rule {i + 1} added to generated_files. Total so far: {len(generated_files)}")  # Debug log
                 
             except Exception as e:
-                print(f"Error processing rule {i + 1}: {str(e)}")  # Debug log
+                logging.error(f"Error processing rule {i + 1}: {str(e)}", exc_info=True)
                 continue
         
         print(f"Final result: Generated {len(generated_files)} files out of {len(rules)} rules")  # Debug log
@@ -304,7 +339,7 @@ def process_rules():
         })
         
     except Exception as e:
-        print(f"Error in process_rules: {str(e)}")  # Debug log
+        logging.error(f"Error in process_rules: {str(e)}", exc_info=True)
         return jsonify({'error': f'Error processing rules: {str(e)}'}), 500
 
 @app.route('/download/<filename>')
